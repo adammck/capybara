@@ -131,7 +131,7 @@ module Capybara
         elements = native.xpath(query.xpath).map do |node|
           self.class.new(node)
         end
-        Capybara::Result.new(elements, query)
+        Capybara::Result.new(native, elements, query)
       end
     end
   end

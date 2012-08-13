@@ -2,7 +2,8 @@ module Capybara
   class Result
     include Enumerable
 
-    def initialize(elements, query)
+    def initialize(base, elements, query)
+      @base = base
       @elements = elements
       @result = elements.select { |node| query.matches_filters?(node) }
       @rest = @elements - @result
@@ -32,7 +33,19 @@ module Capybara
 
     def find_error
       if @result.count == 0
-        Capybara::ElementNotFound.new("Unable to find #{@query.description}")
+        msg = "Expected to find #{@query.description}, but found no matches"
+
+        if @query.has_locator?
+          more_elements = @base.xpath(@query.xpath(false))
+
+          if more_elements.any?
+            suggestions = more_elements.map { |el| describe(el) }.compact.uniq
+            msg += ". Maybe you meant one of: #{suggestions.join(', ')}"
+          end
+        end
+
+        Capybara::ElementNotFound.new(msg)
+
       elsif @result.count > 1
         Capybara::Ambiguous.new("Ambiguous match, found #{size} elements matching #{@query.description}")
       end
@@ -79,6 +92,10 @@ module Capybara
       else
         plural
       end
+    end
+
+    def describe element
+      element['id'] || element['name'] || element['placeholder']
     end
   end
 end

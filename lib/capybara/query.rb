@@ -1,6 +1,6 @@
 module Capybara
   class Query
-    attr_accessor :selector, :locator, :options, :xpath, :find, :negative
+    attr_accessor :selector, :locator, :options, :find, :negative
 
     VALID_KEYS = [:text, :visible, :between, :count, :maximum, :minimum]
 
@@ -11,25 +11,27 @@ module Capybara
         @options[:visible] = Capybara.ignore_hidden_elements
       end
 
-      if args[1]
-        @selector = Selector.all[args[0]]
-        @locator = args[1]
-      else
-        @selector = Selector.all.values.find { |s| s.match?(args[0]) }
-        @locator = args[0]
-      end
-      @selector ||= Selector.all[Capybara.default_selector]
-
-      @xpath = @selector.call(@locator).to_s
+      key = args[0].is_a?(Symbol) ? args.shift : Capybara.default_selector
+      @selector = Selector.all[key]
+      @locator = args
 
       assert_valid_keys!
+    end
+
+    def has_locator?
+      @locator.any?
+    end
+
+    def xpath use_locators=true
+      args = use_locators ? @locator : []
+      @selector.call(*args).to_s
     end
 
     def name; selector.name; end
     def label; selector.label or selector.name; end
 
     def description
-      @description = "#{label} #{locator.inspect}"
+      @description = "#{label} #{locator.map(&:to_s).join}"
       @description << " with text #{options[:text].inspect}" if options[:text]
       @description
     end

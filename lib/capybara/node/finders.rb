@@ -115,7 +115,7 @@ module Capybara
             Capybara::Node::Element.new(session, node, self, query)
           end
         end
-        Capybara::Result.new(elements, query)
+        Capybara::Result.new(base, elements, query)
       end
 
       ##

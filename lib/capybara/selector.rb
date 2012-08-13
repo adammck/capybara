@@ -48,8 +48,8 @@ module Capybara
       @label
     end
 
-    def call(locator)
-      @xpath.call(locator)
+    def call(*args)
+      @xpath.call(*args)
     end
 
     def match?(locator)
@@ -116,7 +116,17 @@ Capybara.add_selector(:radio_button) do
 end
 
 Capybara.add_selector(:checkbox) do
-  xpath { |locator| XPath::HTML.checkbox(locator) }
+  xpath do |*args|
+
+    # TODO: Move this into XPath::HTML#checkbox.
+    if args.empty?
+      XPath::HTML.descendant(:input)[XPath::HTML.attr(:type).equals('checkbox')]
+
+    else
+      XPath::HTML.checkbox(*args)
+    end
+  end
+
   filter(:checked) { |node, value| not(value ^ node.checked?) }
   filter(:unchecked) { |node, value| (value ^ node.checked?) }
 end
