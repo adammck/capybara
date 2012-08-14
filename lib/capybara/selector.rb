@@ -25,9 +25,39 @@ module Capybara
       instance_eval(&block)
     end
 
+    def all_xpath(&block)
+      if block
+        @all_xpath = block
+      else
+        if @all_xpath
+          @all_xpath.call
+        else
+          raise NotSupportedBySelectorError.new("The #{@name} selector does not support finding all")
+        end
+      end
+    end
+
+    def find_xpath(locator=nil, &block)
+      if block
+        @find_xpath = block
+      else
+        if @find_xpath
+          @find_xpath.call(locator)
+        else
+          raise NotSupportedBySelectorError.new("The #{@name} selector does not support finding")
+        end
+      end
+    end
+
+    # Deprecated
     def xpath(&block)
-      @xpath = block if block
-      @xpath
+      @find_xpath = block if block
+      @find_xpath
+    end
+
+    # Deprecated
+    def call(locator)
+      find_xpath(locator)
     end
 
     # Same as xpath, but wrap in XPath.css().
@@ -46,10 +76,6 @@ module Capybara
     def label(label=nil)
       @label = label if label
       @label
-    end
-
-    def call(locator)
-      @xpath.call(locator)
     end
 
     def match?(locator)
@@ -116,7 +142,11 @@ Capybara.add_selector(:radio_button) do
 end
 
 Capybara.add_selector(:checkbox) do
-  xpath { |locator| XPath::HTML.checkbox(locator) }
+
+  # TODO: Fix XPath::HTML#checkbox to make locators optional.
+  all_xpath { XPath::HTML.descendant(:input)[XPath::HTML.attr(:type).equals('checkbox')] }
+  find_xpath { |locator| XPath::HTML.checkbox(locator) }
+
   filter(:checked) { |node, value| not(value ^ node.checked?) }
   filter(:unchecked) { |node, value| (value ^ node.checked?) }
 end

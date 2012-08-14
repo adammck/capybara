@@ -62,10 +62,9 @@ Capybara::SpecHelper.spec "#check" do
 
   context "with a locator that doesn't exist" do
     it "should raise an error" do
-      msg = "Unable to find checkbox \"does not exist\""
       running do
         @session.check('does not exist')
-      end.should raise_error(Capybara::ElementNotFound, msg)
+      end.should raise_error(Capybara::ElementNotFound)
     end
   end
 end

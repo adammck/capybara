@@ -14,6 +14,7 @@ module Capybara
   class NotSupportedByDriverError < CapybaraError; end
   class TimeoutError < CapybaraError; end
   class LocateHiddenElementError < CapybaraError; end
+  class NotSupportedBySelectorError < CapybaraError; end
   class InfiniteRedirectError < TimeoutError; end
 
   class << self

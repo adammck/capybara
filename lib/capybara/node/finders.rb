@@ -25,6 +25,27 @@ module Capybara
       #
       def find(*args)
         synchronize { all(*args).find! }.tap(&:allow_reload!)
+
+      rescue Capybara::Ambiguous
+        raise
+
+      rescue Capybara::ElementNotFound => err
+        if args.length > 1
+          begin
+            nodes = all(args.first)
+
+            if nodes.any?
+              names = nodes.map { |node| node['id'] || node['name'] }.compact.uniq
+              msg = err.message + ". Maybe you meant one of: #{names.join(', ')}"
+              raise Capybara::ElementNotFound.new(msg)
+            end
+
+          # No big deal if the selector doesn't support finding all.
+          rescue NotSupportedBySelectorError
+          end
+        end
+
+        raise
       end
 
       ##

@@ -1,6 +1,6 @@
 module Capybara
   class Query
-    attr_accessor :selector, :locator, :options, :xpath, :find, :negative
+    attr_accessor :selector, :locator, :options, :find, :negative
 
     VALID_KEYS = [:text, :visible, :between, :count, :maximum, :minimum]
 
@@ -11,18 +11,37 @@ module Capybara
         @options[:visible] = Capybara.ignore_hidden_elements
       end
 
-      if args[1]
+      if args.length == 1
+
+        # Just type, no locator.
+        if Selector.all.include?(args[0])
+          @selector = Selector.all[args[0]]
+          @locator = nil
+
+        # Just locator: find the first selector that matches.
+        else
+          @selector = selector_for(args[0]) || Selector.all[Capybara.default_selector]
+          @locator = args[0]
+        end
+
+      # Both type and locator specified.
+      elsif args.length == 2
         @selector = Selector.all[args[0]]
         @locator = args[1]
-      else
-        @selector = Selector.all.values.find { |s| s.match?(args[0]) }
-        @locator = args[0]
-      end
-      @selector ||= Selector.all[Capybara.default_selector]
 
-      @xpath = @selector.call(@locator).to_s
+      else
+        raise ArgumentError
+      end
 
       assert_valid_keys!
+    end
+
+    def xpath
+      if @locator
+        @selector.find_xpath(@locator).to_s
+      else
+        @selector.all_xpath.to_s
+      end
     end
 
     def name; selector.name; end
@@ -63,6 +82,10 @@ module Capybara
       end
     end
 
+    def has_locator?
+      !! @locator
+    end
+
   private
 
     def assert_valid_keys!
@@ -72,6 +95,12 @@ module Capybara
         invalid_names = invalid_keys.map(&:inspect).join(", ")
         valid_names = valid_keys.map(&:inspect).join(", ")
         raise ArgumentError, "invalid keys #{invalid_names}, should be one of #{valid_names}"
+      end
+    end
+
+    def selector_for locator
+      Selector.all.values.find do |selector|
+        selector.match? locator
       end
     end
   end
