@@ -30,6 +30,26 @@ RSpec.configure do |config|
   end
 end
 
+RSpec::Matchers.define :have_attributes do |name, values|
+  match do |nodes|
+    nodes.zip(values).each do |node, value|
+      node[name].should == value
+    end
+  end
+end
+
+RSpec::Matchers.define :have_values do |values|
+  match do |nodes|
+    nodes.should have_attributes "value", values
+  end
+end
+
+RSpec::Matchers.define :have_ids do |ids|
+  match do |nodes|
+    nodes.should have_attributes "id", ids
+  end
+end
+
 # Required here instead of in rspec_spec to avoid RSpec deprecation warning
 require 'capybara/rspec'
 

@@ -25,11 +25,6 @@ describe Capybara::Selector do
       end
     end
 
-    # Fetch attribute +key+ for each of +nodes+.
-    def attrs nodes, key
-      nodes.map { |node| node[key] }
-    end
-
 
     describe 'all_xpath' do
       it 'finds fields' do
@@ -69,7 +64,7 @@ describe Capybara::Selector do
         xpath = selector.find_xpath "a"
         nodes = apply xpath, html
 
-        attrs(nodes, "value").should == %w[1]
+        nodes.should have_values %w[1]
       end
 
       it 'finds fields by name' do
@@ -82,7 +77,7 @@ describe Capybara::Selector do
         xpath = selector.find_xpath "a"
         nodes = apply xpath, html
 
-        attrs(nodes, "value").should == %w[1 2]
+        nodes.should have_values %w[1 2]
       end
 
       it 'finds fields by label' do
@@ -97,7 +92,7 @@ describe Capybara::Selector do
         xpath = selector.find_xpath "Alpha"
         nodes = apply xpath, html
 
-        attrs(nodes, "value").should == %w[1]
+        nodes.should have_values %w[1]
       end
     end
 
@@ -114,10 +109,10 @@ describe Capybara::Selector do
         nodes = apply xpath, html
 
         checked = filter nodes, selector, :checked, true
-        attrs(checked, "id").should == %w[a b]
+        checked.should have_ids %w[a b]
 
         unchecked = filter nodes, selector, :unchecked, true
-        attrs(unchecked, "id").should == %w[c d]
+        unchecked.should have_ids %w[c d]
       end
 
       it 'by value (:with)' do
@@ -131,7 +126,7 @@ describe Capybara::Selector do
         nodes = apply xpath, html
 
         matching = filter nodes, selector, :with, "1"
-        attrs(matching, "id").should include "a", "b"
+        matching.should have_ids %w[a b]
       end
     end
   end
