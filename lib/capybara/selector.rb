@@ -102,7 +102,11 @@ Capybara.add_selector(:id) do
 end
 
 Capybara.add_selector(:field) do
-  xpath { |locator| XPath::HTML.field(locator) }
+
+  # TODO: Fix XPath::HTML#field to make locators optional.
+  all_xpath { XPath::HTML.descendant(:input, :textarea, :select)[~XPath::HTML.attr(:type).one_of('submit', 'image', 'hidden')] }
+  find_xpath { |locator| XPath::HTML.field(locator) }
+
   filter(:checked) { |node, value| not(value ^ node.checked?) }
   filter(:unchecked) { |node, value| (value ^ node.checked?) }
   filter(:with) { |node, with| node.value == with }
