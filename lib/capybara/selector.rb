@@ -28,24 +28,24 @@ module Capybara
     def all_xpath(&block)
       if block
         @all_xpath = block
+
+      elsif @all_xpath
+        @all_xpath.call
+
       else
-        if @all_xpath
-          @all_xpath.call
-        else
-          raise NotSupportedBySelectorError.new("The #{@name} selector does not support finding all")
-        end
+        raise NotSupportedBySelectorError.new("The #{@name} selector does not support finding all")
       end
     end
 
     def find_xpath(locator=nil, &block)
       if block
         @find_xpath = block
+
+      elsif @find_xpath
+        @find_xpath.call(locator)
+
       else
-        if @find_xpath
-          @find_xpath.call(locator)
-        else
-          raise NotSupportedBySelectorError.new("The #{@name} selector does not support finding")
-        end
+        raise NotSupportedBySelectorError.new("The #{@name} selector does not support finding")
       end
     end
 
