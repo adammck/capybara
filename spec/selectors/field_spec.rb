@@ -29,8 +29,6 @@ describe Capybara::Selector do
     describe 'all_xpath' do
       it 'finds fields' do
         html = <<-HTML
-          <div></div>
-          <span></span>
           <input type="button">
           <input type="checkbox">
           <input type="file">
@@ -40,12 +38,17 @@ describe Capybara::Selector do
           <input type="text">
           <textarea></textarea>
           <select></select>
-        HTML
 
-        # Not supported:
-        # <input type="submit">
-        # <input type="hidden">
-        # <input type="image">
+          <!-- Irrelevant: -->
+          <div></div>
+          <span></span>
+          <form></form>
+
+          <!-- Excluded: -->
+          <input type="submit">
+          <input type="hidden">
+          <input type="image">
+        HTML
 
         xpath = selector.all_xpath
         nodes = apply xpath, html
