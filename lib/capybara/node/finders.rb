@@ -24,7 +24,7 @@ module Capybara
       # @raise  [Capybara::ElementNotFound]   If the element can't be found before time expires
       #
       def find(*args)
-        synchronize { all(*args).find! }.tap(&:allow_reload!)
+        synchronize { all(*args).find_one! }.tap(&:allow_reload!)
 
       rescue Capybara::Ambiguous
         raise

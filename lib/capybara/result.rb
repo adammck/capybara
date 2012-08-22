@@ -21,22 +21,23 @@ module Capybara
       @query.matches_count?(@result.size)
     end
 
-    def find!
-      raise find_error if @result.count != 1
-      @result.first
+    def find_one!
+      if count == 1
+        @result.first
+
+      elsif count > 1
+        raise Capybara::Ambiguous.new(
+          "Ambiguous match, found #{count} elements matching #{@query.description}")
+
+      else
+        raise Capybara::ElementNotFound.new(
+          "Unable to find #{@query.description}")
+      end
     end
 
     def size; @result.size; end
     alias_method :length, :size
     alias_method :count, :size
-
-    def find_error
-      if @result.count == 0
-        Capybara::ElementNotFound.new("Unable to find #{@query.description}")
-      elsif @result.count > 1
-        Capybara::Ambiguous.new("Ambiguous match, found #{size} elements matching #{@query.description}")
-      end
-    end
 
     def failure_message
       message = if @query.options[:count]
