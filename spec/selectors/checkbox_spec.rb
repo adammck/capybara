@@ -1,7 +1,13 @@
 require 'spec_helper'
 
 describe Capybara::Selector do
+  include SelectorSpecHelpers
+
   describe '[:checkbox]' do
+    let :selector do
+      Capybara::Selector.all[:checkbox]
+    end
+
     let :string do
       Capybara.string <<-STRING
         <label for="beta">Alpha</label>
@@ -12,44 +18,66 @@ describe Capybara::Selector do
       STRING
     end
 
-    let :selector do
-      Capybara::Selector.all[:checkbox]
-    end
-
-    def apply expression
-      string.native.xpath(expression.to_s)
-    end
-
-    def values nodes
-      nodes.map { |node| node['value'] }.sort
-    end
-
     describe 'all_xpath' do
       it "finds all checkboxes" do
-        nodes = apply selector.all_xpath
-        values(nodes).should == %w(A B C D)
+        html = <<-HTML
+          <input type="checkbox" value="1">
+          <input type="checkbox" value="2">
+          <input type="checkbox" value="3">
+
+          <!-- Irrelevant: -->
+          <textarea></textarea>
+          <input type="text">
+          <form></form>
+        HTML
+
+        xpath = selector.all_xpath
+        nodes = query(xpath, html)
+
+        nodes.should have_values %w[1 2 3]
       end
     end
 
     describe 'find_xpath' do
       it "finds checkboxes by id" do
-        nodes = apply selector.find_xpath('beta')
-        values(nodes).should == %w(A)
+        html = <<-HTML
+          <input type="checkbox" id="a" value="1">
+          <input type="checkbox" id="b" value="2">
+        HTML
+
+        xpath = selector.find_xpath "a"
+        nodes = query(xpath, html)
+
+        nodes.should have_values %w[1]
       end
 
       it "finds checkboxes by name" do
-        nodes = apply selector.find_xpath('gamma')
-        values(nodes).should == %w(B C)
-      end
+        html = <<-HTML
+          <input type="checkbox" name="a" value="1">
+          <input type="checkbox" name="a" value="2">
+          <input type="checkbox" name="b" value="3">
+          <input type="text" name="a" value="4">
+        HTML
 
-      it "finds checkboxes by placeholder" do
-        nodes = apply selector.find_xpath('delta')
-        values(nodes).should == %w(D)
+        xpath = selector.find_xpath "a"
+        nodes = query(xpath, html)
+
+        nodes.should have_values %w[1 2]
       end
 
       it "finds checkboxes by label" do
-        nodes = apply selector.find_xpath('Alpha')
-        values(nodes).should == %w(A)
+        html = <<-HTML
+          <label for="a">Alpha</label>
+          <input type="checkbox" id="a" value="1">
+
+          <label for="b">Beta</label>
+          <input type="checkbox" id="b" value="2">
+        HTML
+
+        xpath = selector.find_xpath "Alpha"
+        nodes = query(xpath, html)
+
+        nodes.should have_values %w[1]
       end
     end
   end

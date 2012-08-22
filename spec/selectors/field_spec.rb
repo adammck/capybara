@@ -1,30 +1,12 @@
 require 'spec_helper'
 
 describe Capybara::Selector do
-  describe '[:field]' do
+  include SelectorSpecHelpers
 
+  describe '[:field]' do
     let :selector do
       Capybara::Selector.all[:field]
     end
-
-    # Apply an xpath +expression+ to an +html+ fragment.
-    # Returns an array of the Nokogiri nodes which matched.
-    def apply expression, html
-      Nokogiri::HTML.parse(html).xpath(expression.to_s)
-    end
-
-    # Filter +nodes+ with +selector+, using the +name+ filter with +args+.
-    def filter nodes, selector, name, *args
-      nodes.select do |node|
-
-        # I'd prefer to keep Capybara out of this spec, since we're only testing
-        # selectors, but custom filters expect a Capybara::Node.
-
-        n = Capybara::Node::Simple.new(node)
-        selector.custom_filters[name].call(n, *args)
-      end
-    end
-
 
     describe 'all_xpath' do
       it 'finds fields' do
@@ -51,7 +33,7 @@ describe Capybara::Selector do
         HTML
 
         xpath = selector.all_xpath
-        nodes = apply xpath, html
+        nodes = query(xpath, html)
 
         nodes.length.should == 9
       end
@@ -64,8 +46,8 @@ describe Capybara::Selector do
           <input id="b" value="2">
         HTML
 
-        xpath = selector.find_xpath "a"
-        nodes = apply xpath, html
+        xpath = selector.find_xpath("a")
+        nodes = query(xpath, html)
 
         nodes.should have_values %w[1]
       end
@@ -77,8 +59,8 @@ describe Capybara::Selector do
           <input name="b" value="3">
         HTML
 
-        xpath = selector.find_xpath "a"
-        nodes = apply xpath, html
+        xpath = selector.find_xpath("a")
+        nodes = query(xpath, html)
 
         nodes.should have_values %w[1 2]
       end
@@ -92,8 +74,8 @@ describe Capybara::Selector do
           <input id="b" value="2">
         HTML
 
-        xpath = selector.find_xpath "Alpha"
-        nodes = apply xpath, html
+        xpath = selector.find_xpath("Alpha")
+        nodes = query(xpath, html)
 
         nodes.should have_values %w[1]
       end
@@ -109,13 +91,17 @@ describe Capybara::Selector do
         HTML
 
         xpath = selector.all_xpath
-        nodes = apply xpath, html
+        nodes = query(xpath, html)
 
-        checked = filter nodes, selector, :checked, true
-        checked.should have_ids %w[a b]
+        checked_nodes = filter(nodes, selector, :checked, true)
+        unchecked_nodes = filter(nodes, selector, :unchecked, true)
+        not_checked_nodes = filter(nodes, selector, :checked, false)
+        not_unchecked_nodes = filter(nodes, selector, :unchecked, false)
 
-        unchecked = filter nodes, selector, :unchecked, true
-        unchecked.should have_ids %w[c d]
+        checked_nodes.should have_ids %w[a b]
+        unchecked_nodes.should have_ids %w[c d]
+        not_checked_nodes.should have_ids %w[c d]
+        not_unchecked_nodes.should have_ids %w[a b]
       end
 
       it 'by value (:with)' do
@@ -126,10 +112,10 @@ describe Capybara::Selector do
         HTML
 
         xpath = selector.all_xpath
-        nodes = apply xpath, html
+        nodes = query(xpath, html)
+        nodes_with_1 = filter(nodes, selector, :with, '1')
 
-        matching = filter nodes, selector, :with, "1"
-        matching.should have_ids %w[a b]
+        nodes_with_1.should have_ids %w[a b]
       end
     end
   end

@@ -30,6 +30,28 @@ RSpec.configure do |config|
   end
 end
 
+module SelectorSpecHelpers
+
+  # Apply an xpath +expression+ to an +html+ fragment, and call a block with an
+  # array of the Nokogiri nodes which matched.
+  def query expression, html
+    Nokogiri::HTML.parse(html).xpath(expression.to_s)
+  end
+
+  # Filter +nodes+ with +selector+, using the +name+ filter with +args+, and
+  # call a block with the resulting nodes.
+  def filter nodes, selector, name, *args
+    nodes.select do |node|
+
+      # I'd prefer to keep Capybara out of this spec, since we're only testing
+      # selectors, but custom filters expect a Capybara::Node.
+
+      n = Capybara::Node::Simple.new(node)
+      selector.custom_filters[name].call(n, *args)
+    end
+  end
+end
+
 RSpec::Matchers.define :have_attributes do |name, values|
   match do |nodes|
     nodes.zip(values).each do |node, value|
