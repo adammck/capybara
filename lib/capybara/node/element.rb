@@ -22,14 +22,8 @@ module Capybara
     #
     class Element < Base
 
-      def initialize(session, base, parent, query)
+      def initialize(session, base)
         super(session, base)
-        @parent = parent
-        @query = query
-      end
-
-      def allow_reload!
-        @allow_reload = true
       end
 
       ##
@@ -175,14 +169,6 @@ module Capybara
       #
       def drag_to(node)
         synchronize { base.drag_to(node.base) }
-      end
-
-      def reload
-        if @allow_reload
-          reloaded = parent.reload.first(@query.name, @query.locator, @query.options)
-          @base = reloaded.base if reloaded
-        end
-        self
       end
 
       def inspect

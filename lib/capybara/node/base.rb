@@ -22,7 +22,7 @@ module Capybara
     #     session.has_css?('#foobar')               # from Capybara::Node::Matchers
     #
     class Base
-      attr_reader :session, :base, :parent
+      attr_reader :session, :base
 
       include Capybara::Node::Finders
       include Capybara::Node::Actions
@@ -36,6 +36,14 @@ module Capybara
       # overridden in subclasses, e.g. Capybara::Node::Element
       def reload
         self
+      end
+
+      ##
+      #
+      # @return [Capybara::Element] The parent element
+      #
+      def parent
+        find(:xpath, "..")
       end
 
       ##
@@ -81,7 +89,6 @@ module Capybara
           raise e if (Time.now - start_time) >= seconds
           sleep(0.05)
           raise Capybara::FrozenInTime, "time appears to be frozen, Capybara does not work with libraries which freeze time, consider using time travelling instead" if Time.now == start_time
-          reload if Capybara.automatic_reload
           retry
         end
       end

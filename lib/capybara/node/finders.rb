@@ -24,28 +24,35 @@ module Capybara
       # @raise  [Capybara::ElementNotFound]   If the element can't be found before time expires
       #
       def find(*args)
-        synchronize { all(*args).find_one! }.tap(&:allow_reload!)
+        query = Capybara::Query.new(*args)
 
-      rescue Capybara::Ambiguous
-        raise
+        synchronize do
+          elements = all(*args)
+          len = elements.length
 
-      rescue Capybara::ElementNotFound => err
-        if args.length > 1
-          begin
-            nodes = all(args.first)
+          if len == 1 # one?
+            elements.first
 
-            if nodes.any?
-              names = nodes.map { |node| node['id'] || node['name'] }.compact.uniq
-              msg = err.message + ". Maybe you meant one of: #{names.join(', ')}"
-              raise Capybara::ElementNotFound.new(msg)
+          elsif len < 1
+            msg = ["Unable to find #{query.description}"]
+
+            begin
+              suggestions = all(args.first)
+              names = suggestions.map { |e| e[:class] || e[:name] || e[:id] }
+              msg.push "Maybe you meant one of: #{names.compact.uniq.join(', ')}"
+
+            # It's not a big deal if the selector doesn't support finding all.
+            # TODO: We should be able to test for this, rather than rescue it.
+            rescue NotSupportedBySelectorError
             end
 
-          # No big deal if the selector doesn't support finding all.
-          rescue NotSupportedBySelectorError
+            raise Capybara::ElementNotFound.new(msg.join(". "))
+
+          elsif len > 1
+            raise Capybara::Ambiguous.new(
+              "Found #{len} elements matching: #{args.inspect}")
           end
         end
-
-        raise
       end
 
       ##
@@ -131,11 +138,11 @@ module Capybara
       #
       def all(*args)
         query = Capybara::Query.new(*args)
-        elements = synchronize do
-          base.find(query.xpath).map do |node|
-            Capybara::Node::Element.new(session, node, self, query)
-          end
+        elements = base.find(query.xpath).map do |node|
+          Capybara::Node::Element.new(session, node)
         end
+
+        # TODO: Get rid of Result. It's just an array.
         Capybara::Result.new(elements, query)
       end
 

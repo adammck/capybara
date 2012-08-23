@@ -18,9 +18,13 @@ Capybara::SpecHelper.spec "node" do
   end
 
   describe "#parent" do
+    #
+    # TODO: This test was previously asserting that @node.parent equals the
+    #       @node.session.document. That didn't seem right, so I changed it.
+    #
     it "should have a reference to its parent if there is one" do
       @node = @session.find(:css, '#first')
-      @node.parent.should == @node.session.document
+      @node.parent.should == @node.find('//body')
       @node.find(:css, '#foo').parent.should == @node
     end
   end
@@ -125,73 +129,6 @@ Capybara::SpecHelper.spec "node" do
       target = @session.find('//div[@id="drop"]')
       element.drag_to(target)
       @session.find('//div[contains(., "Dropped!")]').should_not be_nil
-    end
-  end
-
-  describe '#reload', :requires => [:js] do
-    context "without automatic reload" do
-      before { Capybara.automatic_reload = false }
-      it "should reload the current context of the node" do
-        @session.visit('/with_js')
-        node = @session.find(:css, '#reload-me')
-        @session.click_link('Reload!')
-        sleep(0.3)
-        node.reload.text.should == 'RELOADED'
-        node.text.should == 'RELOADED'
-      end
-
-      it "should reload a parent node" do
-        @session.visit('/with_js')
-        node = @session.find(:css, '#reload-me').find(:css, 'em')
-        @session.click_link('Reload!')
-        sleep(0.3)
-        node.reload.text.should == 'RELOADED'
-        node.text.should == 'RELOADED'
-      end
-
-      it "should not automatically reload" do
-        @session.visit('/with_js')
-        node = @session.find(:css, '#reload-me')
-        @session.click_link('Reload!')
-        sleep(0.3)
-        running { node.text.should == 'RELOADED' }.should raise_error
-      end
-      after { Capybara.automatic_reload = true }
-    end
-
-    context "with automatic reload" do
-      it "should reload the current context of the node automatically" do
-        @session.visit('/with_js')
-        node = @session.find(:css, '#reload-me')
-        @session.click_link('Reload!')
-        sleep(0.3)
-        node.text.should == 'RELOADED'
-      end
-
-      it "should reload a parent node automatically" do
-        @session.visit('/with_js')
-        node = @session.find(:css, '#reload-me').find(:css, 'em')
-        @session.click_link('Reload!')
-        sleep(0.3)
-        node.text.should == 'RELOADED'
-      end
-
-      it "should reload a node automatically when using find" do
-        @session.visit('/with_js')
-        node = @session.find(:css, '#reload-me')
-        @session.click_link('Reload!')
-        sleep(0.3)
-        node.find(:css, 'a').text.should == 'RELOADED'
-      end
-
-      it "should not reload nodes which haven't been found" do
-        @session.visit('/with_js')
-        node = @session.all(:css, '#the-list li')[1]
-        @session.click_link('Fetch new list!')
-        sleep(0.3)
-        running { node.text.should == 'Foo' }.should raise_error
-        running { node.text.should == 'Bar' }.should raise_error
-      end
     end
   end
 end
